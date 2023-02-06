@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-db
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-db
+  template:
+    metadata:
+      labels:
+        app: mysql-db
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0.27
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-initdb
+          mountPath: /docker-entrypoint-initdb.d          
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: MYSQL_DATABASE
+          value: 'flatshare'
+        args:
+        - --lower_case_table_names=1
+        - --skip-ssl
+      volumes:
+      - name: mysql-initdb
+        configMap:
+          name: mysql-initdb-sql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-db-service 
+spec:
+  type: ClusterIP
+  selector:
+    app: mysql-db
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-db-ext-service 
+spec:
+  type: NodePort
+  selector:
+    app: mysql-db
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-sql
+data:
+  initdb.sql: |
+    create database if not exists flatshare;
+
+    use flatshare;
+
+    create table if not exists flatshare.users (
+        id integer not null auto_increment,
+            primary key (id),
+        username varchar(16) not null,
+            unique (username),
+        email varchar(50) not null,
+            unique (email),
+        passhash varchar(200) not null
+    );
+
+    create table if not exists flatshare.files (
+        id integer not null auto_increment,
+            primary key (id),
+        owner_id integer not null,
+            constraint fk_files_users foreign key (owner_id) references users(id),
+        filename varchar(16) not null,
+        route varchar(50) not null,
+        status varchar(50) not null,
+        unique key owner_filename (owner_id, filename)
+    );
+
+    create table if not exists flatshare.file_access (
+        id_user integer not null,
+            constraint fk_file_access_users foreign key (id_user) references users(id),
+        id_file integer not null,
+            constraint fk_file_access_files foreign key (id_file) references files(id),
+        unique key user_file (id_user, id_file)
+    );
