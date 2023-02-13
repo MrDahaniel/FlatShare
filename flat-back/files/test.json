@@ -1,0 +1,45 @@
+{
+    "things": {
+        "18830-99": {
+            "inv": "18830-99", 
+            "class": "Aire Acondicionado", 
+            "make": "LG",
+            "model": "Inverter 2"
+        }, 
+
+        "91232-02": {
+            "inv": "18832-99", 
+            "class": "Aire Descondicionado", 
+            "make": "GL",
+            "model": "Inverter -2"
+        }
+    },
+
+    "orders":  [
+        {   
+            "inv": "18830-99",
+            "number": "1781041",
+            "status": 0,
+            "pics": ["https://i.imgur.com/Ws9Gckz.png"], 
+            "description": "long text cool",
+            "requestor": {
+                "name": "Maxwell",
+                "office": "Decanatura Ciencias Básicas"
+            },
+            "location": {
+                "building": "Camilo Torres",
+                "room": "Aula 503"
+            }
+        },
+        {}
+    ],
+
+    "status": {
+        "0": "Nueva",
+        "1": "Pendiente",
+        "2": "En Progreso",
+        "3": "Pendiente A Visto Bueno",
+        "4": "Completado"
+    }
+
+}
