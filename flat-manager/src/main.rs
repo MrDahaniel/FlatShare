@@ -6,6 +6,28 @@ use awc::Client;
 use url::Url;
 use log;
 
+#[get("/list/{user}")]
+async fn list_files(
+    req: HttpRequest,
+    client: web::Data<Client>,
+    url: web::Data<Url>
+) -> Result<HttpResponse, Error> {
+    let mut new_url = (**url).clone();
+    new_url.set_path(req.uri().path());
+    new_url.set_query(req.uri().query());
+
+    let mut g_req = client
+        .request_from(new_url.as_str(), req.head())
+        .no_decompress()
+        .send()
+        .await
+        .unwrap();
+
+    let body = g_req.body().await?;
+
+    Ok(HttpResponse::Ok().body(body))
+}
+
 #[get("/download/{user}/{filename}")]
 async fn download_file(
     req: HttpRequest,
@@ -31,7 +53,13 @@ async fn download_file(
         .await
         .unwrap();
 
-    Ok(HttpResponse::Ok().body(g_req.body().await.unwrap()))
+    let body = g_req.body().await?;
+
+
+    Ok(HttpResponse::Ok()
+        .insert_header(("Content-Disposition", "attachment"))
+        .body(body))
+
 }
 
 /// Forwards the incoming HTTP request using `awc`.
@@ -51,13 +79,6 @@ async fn forward_upload(
         .request_from(new_url.as_str(), req.head())
         .no_decompress();
 
-    log::info!(
-        "{:?}", new_url
-    );
-    
-    
-    // TODO: This forwarded implementation is incomplete as it only handles the unofficial
-    // X-Forwarded-For header but not the official Forwarded one.
     let forwarded_req = match peer_addr {
         Some(PeerAddr(addr)) => {
             forwarded_req.insert_header(("x-forwarded-for", addr.ip().to_string()))
@@ -71,8 +92,6 @@ async fn forward_upload(
         .map_err(error::ErrorInternalServerError)?;
 
     let mut client_resp = HttpResponse::build(res.status());
-    // Remove `Connection` as per
-    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection#Directives
     for (header_name, header_value) in res.headers().iter().filter(|(h, _)| *h != "connection") {
         client_resp.insert_header((header_name.clone(), header_value.clone()));
     }
@@ -96,12 +115,6 @@ async fn main() -> std::io::Result<()> {
     let mut forward_url = Url::parse("http://localhost").unwrap();
     forward_url.set_host(Some("localhost")).unwrap();
     forward_url.set_port(Some(8080)).unwrap();
-    // forward_url.set_path("/upload");
-
-    log::info!(
-        "{:?}", forward_url
-    );
-    
 
     let reqwest_client = reqwest::Client::default();
 
@@ -113,6 +126,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .service(forward_upload)
             .service(download_file)
+            .service(list_files)
     })
     .bind("localhost:8000")?
     .workers(2)

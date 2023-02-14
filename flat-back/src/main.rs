@@ -13,7 +13,26 @@ use actix_web::{
 use futures_util::TryStreamExt as _;
 use uuid::Uuid;
 
-#[get("/download/{path}/{filename}")]
+#[get("/list/{user}")]
+async fn list_user_files(
+    path: web::Path<String>
+) -> HttpResponse {
+    let paths = fs::read_dir(&path.as_str());
+    let mut body = String::from("");
+
+    match paths {
+        Ok(paths) => {
+            for file in paths {
+                body = format!("{}{}\n", body, file.unwrap().file_name().to_str().unwrap());
+            }
+        },
+        Err(_) => return HttpResponse::InternalServerError().body("Could not find user.")
+    }
+
+    HttpResponse::Ok().body(body)
+}
+
+#[get("/download/{user}/{filename}")]
 async fn download_file(
     req: HttpRequest,
     path: web::Path<(String, String)>
@@ -68,6 +87,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .service(download_file)
             .service(upload_file)
+            .service(list_user_files)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
