@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: flat-manager
   labels:
-    app: rust
+    app: flat-manager
 spec:
   replicas: 1
   selector:
@@ -19,6 +19,12 @@ spec:
         image: mrdahaniel/flat-manager:latest
         ports:
         - containerPort: 8080
+        volumeMounts:
+        - name: manager-vol
+          mountPath: /data2
+      volumes:
+      - name: manager-vol
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -32,4 +38,3 @@ spec:
     - protocol: TCP
       port: 8080
       targetPort: 8080
-      nodePort: 30100

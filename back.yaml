@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: flat-back
   labels:
-    app: rust
+    app: flat-back
 spec:
   replicas: 1
   selector:
@@ -19,8 +19,12 @@ spec:
         image: mrdahaniel/flat-back:latest
         ports:
         - containerPort: 8080
+        volumeMounts:
+        - name: back-vol
+          mountPath: /data
       volumes:
       - name: back-vol
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
