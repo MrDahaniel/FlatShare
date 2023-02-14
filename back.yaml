@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flat-back
+  labels:
+    app: rust
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flat-back
+  template: 
+    metadata:
+      labels:
+        app: flat-back
+    spec:
+      containers:
+      - name: flat-back 
+        image: mrdahaniel/flat-back:latest
+        ports:
+        - containerPort: 8080
+      volumes:
+      - name: back-vol
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flatbackservice
+spec:
+  type: ClusterIP
+  selector:
+    app: flat-back
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flat-manager
+  labels:
+    app: rust
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flat-manager
+  template: 
+    metadata:
+      labels:
+        app: flat-manager
+    spec:
+      containers:
+      - name: flat-manager 
+        image: mrdahaniel/flat-manager:latest
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: flatmanagernode
+spec:
+  type: NodePort
+  selector:
+    app: flat-manager
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30100

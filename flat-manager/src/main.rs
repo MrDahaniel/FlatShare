@@ -6,6 +6,8 @@ use awc::Client;
 use url::Url;
 use log;
 
+use std::env;
+
 #[get("/list/{user}")]
 async fn list_files(
     req: HttpRequest,
@@ -99,22 +101,20 @@ async fn forward_upload(
     Ok(client_resp.streaming(res))
 }
 
-
-#[derive(clap::Parser, Debug)]
-struct CliArguments {
-    listen_addr: String,
-    listen_port: u16,
-    forward_addr: String,
-    forward_port: u16,
-}
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    let mut forward_url = Url::parse("http://localhost").unwrap();
-    forward_url.set_host(Some("localhost")).unwrap();
+    // let flat_back_ip = match env::var("") {
+    //     Ok(ip) => format!("http://flatbackservice", ip),
+    //     Err(_) => panic!("No forward ip")
+    // };
+
+    let mut forward_url = Url::parse("http://flatbackservice").unwrap();
+    // forward_url.set_host(Some("localhost")).unwrap();
     forward_url.set_port(Some(8080)).unwrap();
+
+    log::info!("{}", forward_url);
 
     let reqwest_client = reqwest::Client::default();
 
