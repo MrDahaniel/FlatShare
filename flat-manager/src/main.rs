@@ -128,7 +128,7 @@ async fn main() -> std::io::Result<()> {
             .service(download_file)
             .service(list_files)
     })
-    .bind("localhost:8000")?
+    .bind("localhost:8080")?
     .workers(2)
     .run()
     .await
