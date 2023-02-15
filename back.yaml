@@ -31,7 +31,7 @@ kind: Service
 metadata:
   name: flatbackservice
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: flat-back
   ports:
